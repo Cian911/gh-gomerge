@@ -21,11 +21,11 @@ type sectionPullRequestsFetchedMsg struct {
 func (pr PullRequest) renderReviewStatus() string {
 	reviewCellStyle := lipgloss.NewStyle()
 	if pr.Data.ReviewDecision == "APPROVED" {
-		return reviewCellStyle.Foreground("SUCCESS").Render("")
+		return reviewCellStyle.Foreground(lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"}).Render("")
 	}
 
 	if pr.Data.ReviewDecision == "CHANGES_REQUESTED" {
-		return reviewCellStyle.Foreground("CHANGES_REQUESTED").Render("")
+		return reviewCellStyle.Foreground(lipgloss.AdaptiveColor{Light: "#242347", Dark: "#E2E1ED"}).Render("")
 	}
 
 	return reviewCellStyle.Render(constants.WaitingGlyph)
@@ -41,7 +41,7 @@ func (pr PullRequest) renderState() string {
 	case "MERGED":
 		return mergeCellStyle.Foreground(mergedPR).Render("")
 	default:
-		return mergeCellStyle.Foreground(styles.DefaultTheme.FaintText).Render("-")
+		return mergeCellStyle.Foreground(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#3E4057"}).Render("-")
 	}
 }
 
@@ -51,24 +51,24 @@ func (pr PullRequest) GetStatusChecksRollup() string {
 	}
 
 	accStatus := "SUCCESS"
-	mostRecentCommit := pr.Data.Commits.Nodes[0].Commit
-	for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes {
-		var conclusion string
-		if statusCheck.Typename == "CheckRun" {
-			conclusion = string(statusCheck.CheckRun.Conclusion)
-			status := string(statusCheck.CheckRun.Status)
-			if isStatusWaiting(status) {
-				accStatus = "PENDING"
-			}
-		} else if statusCheck.Typename == "StatusContext" {
-			conclusion = string(statusCheck.StatusContext.State)
-		}
-
-		if isConclusionAFailure(conclusion) {
-			accStatus = "FAILURE"
-			break
-		}
-	}
+	/* mostRecentCommit := pr.Data.Commits.Nodes[0].Commit */
+	/* for _, statusCheck := range mostRecentCommit.StatusCheckRollup.Contexts.Nodes { */
+	/*   var conclusion string */
+	/*   if statusCheck.Typename == "CheckRun" { */
+	/*     conclusion = string(statusCheck.CheckRun.Conclusion) */
+	/*     status := string(statusCheck.CheckRun.Status) */
+	/*     if isStatusWaiting(status) { */
+	/*       accStatus = "PENDING" */
+	/*     } */
+	/*   } else if statusCheck.Typename == "StatusContext" { */
+	/*     conclusion = string(statusCheck.StatusContext.State) */
+	/*   } */
+	/*  */
+	/*   if isConclusionAFailure(conclusion) { */
+	/*     accStatus = "FAILURE" */
+	/*     break */
+	/*   } */
+	/* } */
 
 	return accStatus
 }
@@ -88,21 +88,21 @@ func (pr PullRequest) renderCiStatus() string {
 	return ciCellStyle.Render(constants.FailureGlyph)
 }
 
-func (pr PullRequest) renderLines() string {
-	deletions := 0
-	if pr.Data.Deletions > 0 {
-		deletions = pr.Data.Deletions
-	}
-
-	return lipgloss.NewStyle().Render(
-		fmt.Sprintf("%d / -%d", pr.Data.Additions, deletions),
-	)
-}
+/* func (pr PullRequest) renderLines() string { */
+/* deletions := 0 */
+/* if pr.Data.Deletions > 0 { */
+/*   deletions = pr.Data.Deletions */
+/* } */
+/*  */
+/* return lipgloss.NewStyle().Render( */
+/*   fmt.Sprintf("%d / -%d", pr.Data.Additions, deletions), */
+/* ) */
+/* } */
 
 func (pr PullRequest) renderTitle() string {
 	return lipgloss.NewStyle().
 		Inline(true).
-		Foreground("RenderTitle").
+		Foreground(lipgloss.AdaptiveColor{Light: "#D9DCCF", Dark: "#3E4057"}).
 		Render(
 			fmt.Sprintf("#%d %s",
 				pr.Data.Number,
@@ -116,14 +116,15 @@ func (pr PullRequest) renderAuthor() string {
 }
 
 func (pr PullRequest) renderRepoName() string {
-	repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
+	// repoName := utils.TruncateString(pr.Data.HeadRepository.Name, 18)
+	repoName := pr.Data.HeadRepository.Name
 	return lipgloss.NewStyle().
 		Render(repoName)
 }
 
 func (pr PullRequest) renderUpdateAt() string {
 	return lipgloss.NewStyle().
-		Render(utils.TimeElapsed(pr.Data.UpdatedAt))
+		Render(pr.Data.UpdatedAt.String())
 }
 
 func (pr PullRequest) RenderState() string {
@@ -148,7 +149,7 @@ func (pr PullRequest) ToTableRow() table.Row {
 		pr.renderReviewStatus(),
 		pr.renderState(),
 		pr.renderCiStatus(),
-		pr.renderLines(),
+		// pr.renderLines(),
 	}
 }
 

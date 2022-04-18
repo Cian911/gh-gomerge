@@ -2,6 +2,7 @@ package api
 
 import (
 	"log"
+	"time"
 
 	"github.com/cli/go-gh"
 	gClient "github.com/cli/go-gh/pkg/api"
@@ -23,6 +24,12 @@ type PullRequest struct {
 	State          string
 	IsDraft        bool
 	ReviewDecision string
+	Additions      int
+	Deletions      int
+	HeadRepository struct {
+		Name string
+	}
+	UpdatedAt time.Time
 }
 
 func New() *GhClient {

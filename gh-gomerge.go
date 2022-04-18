@@ -69,11 +69,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m model) getCurrSection() section.Section {
+	sections := m.getCurrentViewSections()
+	if len(sections) == 0 {
+		return nil
+	}
+	return sections[0]
+}
+
+func (m model) setCurrentViewSections(newSections []section.Section) {
+	m.prs = newSections
+}
+
+func (m model) getCurrentViewSections() []section.Section {
+	return m.prs
+}
+
 func (m model) View() string {
 	// s := "Pull Requests\n\n\n"
 	s := strings.Builder{}
 
-	content := lipgloss.JoinHorizontal(lipgloss.Top, m.prs)
+	content := lipgloss.JoinHorizontal(lipgloss.Top, m.getCurrSection().View())
 
 	s.WriteString(content)
 	s.WriteString("\n")

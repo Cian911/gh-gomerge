@@ -1,6 +1,6 @@
 module github.com/cian911/gh-gomerge
 
-go 1.18
+go 1.17
 
 require (
 	github.com/charmbracelet/bubbles v0.10.3
