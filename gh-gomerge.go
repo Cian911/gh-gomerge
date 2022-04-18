@@ -1,21 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	data "github.com/cian911/gh-gomerge/pkg/api"
+	"github.com/cian911/gh-gomerge/pkg/ui/components/section"
 )
 
 type model struct {
-	choices  []string         // items on the to-do list
+	choices  []data.PullRequest
+	prs      []section.Section
 	cursor   int              // which to-do list item our cursor is pointing at
 	selected map[int]struct{} // which to-do items are selected
 }
 
-func initModel() model {
+func initModel(c data.GhClient) model {
 	return model{
-		choices: []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices: c.ListPullRequests(),
 
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
@@ -66,30 +70,36 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "What are we going to buy in the shop today?\n\n"
+	// s := "Pull Requests\n\n\n"
+	s := strings.Builder{}
 
-	for i, choice := range m.choices {
-		cursor := " "
-		if m.cursor == i {
-			cursor = ">"
-		}
+	content := lipgloss.JoinHorizontal(lipgloss.Top, m.prs)
 
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "x"
-		}
+	s.WriteString(content)
+	s.WriteString("\n")
+	return s.String()
 
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
-	}
+	/* for i, choice := range m.choices { */
+	/* cursor := " " */
+	/* if m.cursor == i { */
+	/*   cursor = ">" */
+	/* } */
+	/*  */
+	/* checked := " " */
+	/* if _, ok := m.selected[i]; ok { */
+	/*   checked = "x" */
+	/* } */
+	/*  */
+	/* s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice.Title) */
+	/* } */
 
-	s += "\nPress q to quit.\n"
-
-	return s
+	// s += "\nPress q to quit.\n"
 }
 
 func main() {
+	c := data.New()
 	p := tea.NewProgram(
-		initModel(),
+		initModel(*c),
 		tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		log.Fatalf("Opps, failed: %v", err)
