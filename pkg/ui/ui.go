@@ -1,76 +1,90 @@
 package ui
 
 import (
-	"strings"
-
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/cian911/gh-gomerge/pkg/api"
+	"github.com/spf13/cast"
 )
 
 type Model struct {
-	// sections *[]section
-	viewport viewport.Model
-	err      error
-	isReady  bool
+	PrList   list.Model
+	Viewport viewport.Model
+	Spinner  spinner.Model
+
+	PrDetails string
+	Ready     bool
+
+	Width  int
+	Height int
+
+	ghClient *api.GhClient
 }
 
-type initScreen struct{}
-
-type errMsg struct{ error }
-
 func NewModel() Model {
+	l := list.New(nil, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "gh-gomerge - Pull Requests"
+	l.SetShowHelp(true)
+	l.SetShowStatusBar(false)
+	l.SetShowFilter(false)
+
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+
+	gc := api.New()
+
 	return Model{
-		isReady: false,
+		PrList:    l,
+		Spinner:   s,
+		PrDetails: "",
+		Ready:     false,
+		ghClient:  gc,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen)
+	return tea.Batch(tea.EnterAltScreen, m.ListPrsCmd())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
+
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.Width, m.Height = msg.Width, msg.Height
+		statusBarHeight := lipgloss.Height(StatusView(m))
+		height := m.Height - statusBarHeight
 
-	// Is this a key prress?
+		prListViewWidth := cast.ToInt(0.3 * float64(m.Width))
+		prListWidth := prListViewWidth - listViewStyle.GetHorizontalFrameSize()
+		m.PrList.SetSize(prListWidth, height)
+
+		prDetailViewWidth := m.Width - prListViewWidth
+		m.Viewport = viewport.New(prDetailViewWidth, height)
+		m.Viewport = viewport.New(m.Width, m.Height)
+		m.Viewport.MouseWheelEnabled = true
+		m.Viewport.SetContent(ViewportContent(m.Width - prDetailViewWidth))
+	case prsMsg:
+		m.PrList.SetItems(msg.items)
 	case tea.KeyMsg:
-
-		// Yes, check the key
 		switch msg.String() {
-
-		// Close app
 		case "ctrl+c", "q":
 			return m, tea.Quit
-
-		case "up", "k":
-			// Move up
-
-		case "down", "j":
-			// Move down
-
-		case "m":
-			// Select PR to me merged
-
-		case "a":
-			// Select PR to be approved
-
-		case "enter", " ":
-			// Open confirmation section
-
 		}
-
-	case initScreen:
-		// Show initScreen with loading message
-
-	case errMsg:
-		m.err = msg
-		return m, nil
 	}
 
-	return m, nil
+	m.Spinner, cmd = m.Spinner.Update(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	s := strings.Builder{}
-
-	return s.String()
+	return lipgloss.JoinVertical(lipgloss.Right, lipgloss.JoinHorizontal(lipgloss.Top, ListView(m), DetailView(m)), StatusView(m))
 }
