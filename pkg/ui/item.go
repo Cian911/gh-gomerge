@@ -1,6 +1,9 @@
 package ui
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type Item struct {
 	Number int
@@ -21,6 +24,6 @@ type Item struct {
 	UpdatedAt time.Time
 }
 
-func (i Item) Description() string { return i.Body }
+func (i Item) Description() string { return i.Title }
 
-func (i Item) FilterValue() string { return i.Title }
+func (i Item) FilterValue() string { return strconv.Itoa(i.Number) }

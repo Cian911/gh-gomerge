@@ -6,7 +6,7 @@ var (
 	listViewStyle = lipgloss.NewStyle().
 		PaddingRight(1).
 		MarginRight(1).
-		Border(lipgloss.RoundedBorder(), true, true, false, false)
+		Border(lipgloss.RoundedBorder(), false, true, false, false)
 )
 
 func ListView(m Model) string {

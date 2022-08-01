@@ -20,13 +20,13 @@ func StatusView(m Model) string {
 	var status string
 	var statusDesc string
 
-	if !m.Ready {
+	switch m.Ready {
+	case true:
+		status = "Ready"
+		statusDesc = "Ready to merge."
+	case false:
 		status = m.Spinner.View()
 		statusDesc = "Loading..."
-	} else {
-		status = "Ready"
-		statusDesc = "Ready"
-		m.Ready = true
 	}
 
 	statusKey := statusStyle.Render(status)

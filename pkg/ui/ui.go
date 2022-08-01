@@ -27,7 +27,7 @@ type Model struct {
 func NewModel() Model {
 	l := list.New(nil, list.NewDefaultDelegate(), 0, 0)
 	l.Title = "gh-gomerge - Pull Requests"
-	l.SetShowHelp(true)
+	l.SetShowHelp(false)
 	l.SetShowStatusBar(false)
 	l.SetShowFilter(false)
 
@@ -46,7 +46,7 @@ func NewModel() Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.EnterAltScreen, m.ListPrsCmd())
+	return tea.Batch(tea.EnterAltScreen, m.Spinner.Tick, m.ListPrsCmd())
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -61,7 +61,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		statusBarHeight := lipgloss.Height(StatusView(m))
 		height := m.Height - statusBarHeight
 
-		prListViewWidth := cast.ToInt(0.3 * float64(m.Width))
+		prListViewWidth := cast.ToInt(0.7 * float64(m.Width))
 		prListWidth := prListViewWidth - listViewStyle.GetHorizontalFrameSize()
 		m.PrList.SetSize(prListWidth, height)
 
@@ -69,14 +69,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Viewport = viewport.New(prDetailViewWidth, height)
 		m.Viewport = viewport.New(m.Width, m.Height)
 		m.Viewport.MouseWheelEnabled = true
-		m.Viewport.SetContent(ViewportContent(m.Width - prDetailViewWidth))
+		m.Viewport.SetContent(m.ViewportContent(m.Width - prDetailViewWidth))
 	case prsMsg:
 		m.PrList.SetItems(msg.items)
+		m.PrList, cmd = m.PrList.Update(msg)
+		cmds = append(cmds, cmd)
+		m.Viewport.GotoTop()
+		m.Viewport.SetContent(m.ViewportContent(m.Viewport.Width))
+		m.Ready = true
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
+		switch msg.Type {
+		case tea.KeyCtrlC, tea.KeyEsc:
+			cmd = tea.Quit
+			cmds = append(cmds, cmd)
+		case tea.KeyUp, tea.KeyDown, tea.KeyLeft, tea.KeyRight:
+			m.PrList, cmd = m.PrList.Update(msg)
+			cmds = append(cmds, cmd)
+			m.Viewport.GotoTop()
+			m.Viewport.SetContent(m.ViewportContent(m.Viewport.Width))
 		}
+	default:
+		m.PrList, cmd = m.PrList.Update(msg)
+		cmds = append(cmds, cmd)
+
+		m.Viewport, cmd = m.Viewport.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	m.Spinner, cmd = m.Spinner.Update(msg)
@@ -86,5 +103,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return lipgloss.JoinVertical(lipgloss.Right, lipgloss.JoinHorizontal(lipgloss.Top, ListView(m), DetailView(m)), StatusView(m))
+	return lipgloss.JoinVertical(lipgloss.Right, lipgloss.JoinHorizontal(lipgloss.Top, ListView(m), DetailView(m)))
 }
