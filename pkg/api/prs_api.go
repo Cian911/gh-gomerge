@@ -49,15 +49,17 @@ func New() *GhClient {
 // Get a list of pull requests for a repository
 func (c *GhClient) ListPullRequests() (prs []PullRequest) {
 	var queryResult struct {
-		Search struct {
-			Nodes []struct {
-				PullRequest PullRequest `graphql:"... on PullRequest"`
-			}
-		} `graphql:"search(type: ISSUE, first: $limit, query: $query)"`
+		Repository struct {
+			PullRequests struct {
+				Nodes []struct {
+					PullRequest
+				}
+			} `graphql:"pullRequests(first:100, states:OPEN)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 	vars := map[string]interface{}{
-		"query": graphql.String("is:pr author:Cian911"),
-		"limit": graphql.Int(10),
+		"owner": graphql.String("Cian911"),
+		"name":  graphql.String("switchboard"),
 	}
 
 	err := c.client.Query("SearchPullRequests", &queryResult, vars)
@@ -66,8 +68,8 @@ func (c *GhClient) ListPullRequests() (prs []PullRequest) {
 		return nil
 	}
 
-	prs = make([]PullRequest, 0, len(queryResult.Search.Nodes))
-	for _, node := range queryResult.Search.Nodes {
+	prs = make([]PullRequest, 0, len(queryResult.Repository.PullRequests.Nodes))
+	for _, node := range queryResult.Repository.PullRequests.Nodes {
 		prs = append(prs, node.PullRequest)
 	}
 
