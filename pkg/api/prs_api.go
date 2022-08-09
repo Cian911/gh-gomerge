@@ -58,8 +58,8 @@ func (c *GhClient) ListPullRequests() (prs []PullRequest) {
 		} `graphql:"repository(owner: $owner, name: $name)"`
 	}
 	vars := map[string]interface{}{
-		"owner": graphql.String("Cian911"),
-		"name":  graphql.String("switchboard"),
+		"owner": graphql.String("google"),
+		"name":  graphql.String("go-github"),
 	}
 
 	err := c.client.Query("SearchPullRequests", &queryResult, vars)
